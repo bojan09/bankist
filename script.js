@@ -75,9 +75,9 @@ const displayMovements = function (movements) {
   });
 };
 
-const calcAndDisplayBalance = (movements) => {
-  const balance = movements.reduce((acc, move) => acc + move, 0);
-  labelBalance.textContent = `${balance} €`;
+const calcAndDisplayBalance = (acc) => {
+  acc.balance = acc.movements.reduce((acc, move) => acc + move, 0);
+  labelBalance.textContent = `${acc.balance} €`;
 };
 
 const calcAndDisplaySummary = (acc) => {
@@ -116,6 +116,16 @@ const createUsernames = (accs) => {
 createUsernames(accounts);
 // console.log(accounts);
 
+// Update UI
+const updateUI = (acc) => {
+  // Display movements
+  displayMovements(currentAccount.movements);
+  // Display balance
+  calcAndDisplayBalance(currentAccount);
+  // Display summary
+  calcAndDisplaySummary(currentAccount);
+};
+
 // Event handlers
 let currentAccount;
 
@@ -139,14 +149,11 @@ btnLogin.addEventListener("click", function (e) {
     // Clear input fields
     inputLoginUsername.value = inputLoginPin.value = "";
     // remove focus on the pin  field
+
     inputLoginPin.blur();
 
-    // Display movements
-    displayMovements(currentAccount.movements);
-    // Display balance
-    calcAndDisplayBalance(currentAccount.movements);
-    // Display summary
-    calcAndDisplaySummary(currentAccount);
+    // Update UI
+    updateUI(currentAccount);
   }
 });
 
@@ -158,65 +165,35 @@ btnTransfer.addEventListener("click", (e) => {
     (acc) => acc.username === inputTransferTo.value
   );
 
-  console.log(amount, reciverAcc);
+  console.log(reciverAcc, amount);
 });
 
-const currencies = new Map([
-  ["USD", "United States dollar"],
-  ["EUR", "Euro"],
-  ["GBP", "Pound sterling"],
-]);
+// TRANSFERING AMOUNT BETWEEN USERS
+btnTransfer.addEventListener("click", (e) => {
+  e.preventDefault();
 
-const movements = [200, 450, -400, 5425, -650, -130, 70, 1300];
+  // Amount to send
+  const amount = Number(inputTransferAmount.value);
 
-const EURtoUSD = 1.1;
+  // Who to send to
+  const reciverAccount = accounts.find(
+    (acc) => acc.username === inputTransferTo.value
+  );
 
-/*****************MAP METHOD*********************/
-const movementsEURtoUSD = movements.map((mov) => mov * EURtoUSD);
+  console.log(reciverAccount, amount);
 
-const movementDescriptions = movements.map(
-  (mov, i) =>
-    `Movement ${i + 1}: 
-  You ${mov > 0 ? "deposited" : "withdrew"} ${Math.abs(mov)}`
-);
+  // Trasnfering amount only as much as we have on balance, and unable to transfer money to ourself
+  if (
+    amount > 0 &&
+    reciverAccount &&
+    currentAccount.balance >= amount &&
+    reciverAccount?.username !== currentAccount.username
+  ) {
+    // Doing the transfer
+    currentAccount.movements.push(-amount);
+    reciverAccount.movements.push(amount);
 
-/************FILTER METHOD*********************/
-const deposits = movements.filter((mov) => {
-  return mov > 0;
-});
-// console.log(deposits);
-
-const withdrawals = movements.filter((mov) => {
-  return mov < 0;
-});
-// console.log(withdrawals);
-
-/*****************REDUCE METHOD*******************/
-const balance = movements.reduce((acc, currValue, i) => {
-  // console.log(`Iteration number ${i}: ${acc}`);
-  return acc + currValue;
-}, 0);
-
-// Get maximum value of movements array
-const maxValue = movements.reduce((acc, mov) => {
-  if (acc > mov) {
-    return acc;
-  } else {
-    return mov;
+    // Update UI
+    updateUI(currentAccount);
   }
-}, movements[0]);
-// console.log(`max value is: ${maxValue}`);
-
-const calcAverageHumanAge = function (ages) {
-  const humanAges = ages.map((age) => (age <= 2 ? 2 * age : 16 + age * 4));
-  // console.log(humanAges);
-};
-calcAverageHumanAge([5, 2, 4, 1, 15, 8, 3]);
-
-/*****************FIND METHOD*******************/
-/*Retrive 1 element based on given conditions*/
-const firstWithdrawl = movements.find((mov) => mov < 0);
-// console.log(firstWithdrawl);
-
-const account = accounts.find((acc) => acc.owner == "Jessica Davis");
-// console.log(account);
+});
