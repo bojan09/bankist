@@ -144,6 +144,7 @@ btnLogin.addEventListener("click", function (e) {
     labelWelcome.textContent = `Welcome back ${
       currentAccount.owner.split(" ")[0]
     }`;
+
     containerApp.style.opacity = 100;
 
     // Clear input fields
@@ -180,7 +181,7 @@ btnTransfer.addEventListener("click", (e) => {
     (acc) => acc.username === inputTransferTo.value
   );
 
-  console.log(reciverAccount, amount);
+  inputTransferAmount.value = inputTransferTo.value = "";
 
   // Trasnfering amount only as much as we have on balance, and unable to transfer money to ourself
   if (
