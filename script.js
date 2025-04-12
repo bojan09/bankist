@@ -24,7 +24,7 @@ const account3 = {
 
 const account4 = {
   owner: "Frank Delano",
-  movements: [430, 1000, 700, 50, 90],
+  movements: [390, 1000, 700, 50, 90],
   interestRate: 1,
   pin: 4444,
 };
@@ -57,10 +57,12 @@ const inputLoanAmount = document.querySelector(".form__input--loan-amount");
 const inputCloseUsername = document.querySelector(".form__input--user");
 const inputClosePin = document.querySelector(".form__input--pin");
 
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = false) {
   containerMovements.innerHTML = "";
 
-  movements.forEach(function (mov, i) {
+  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
+  movs.forEach(function (mov, i) {
     const type = mov > 0 ? "deposit" : "withdrawal";
 
     const html = `
@@ -169,7 +171,7 @@ btnTransfer.addEventListener("click", (e) => {
   console.log(reciverAcc, amount);
 });
 
-// TRANSFERING AMOUNT BETWEEN USERS
+// Transfer amount between users
 btnTransfer.addEventListener("click", (e) => {
   e.preventDefault();
 
@@ -197,4 +199,59 @@ btnTransfer.addEventListener("click", (e) => {
     // Update UI
     updateUI(currentAccount);
   }
+});
+
+// Request a loan
+
+btnLoan.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  const amount = Number(inputLoanAmount.value);
+
+  if (
+    amount > 0 &&
+    currentAccount.movements.some((mov) => mov >= amount * 0.1)
+  ) {
+    // Add movement
+    currentAccount.movements.push(amount);
+
+    // Update UI
+    updateUI(currentAccount);
+  }
+
+  // Clear the input field
+  inputLoanAmount.value = "";
+});
+
+// Close Account
+btnClose.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (
+    inputCloseUsername.value === currentAccount.username &&
+    Number(inputClosePin.value) === currentAccount.pin
+  ) {
+    const index = accounts.findIndex(
+      (acc) => acc.username === currentAccount.username
+    );
+
+    console.log(index);
+
+    // Delete Account
+    accounts.splice(index, 1);
+
+    // Hide UI
+    containerApp.style.opacity = 0;
+  }
+
+  // Clear input fields
+  inputCloseUsername.value = inputClosePin.value = "";
+});
+
+let sorted = false;
+btnSort.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  displayMovements(currentAccount.movements, !sorted);
+  sorted = !sorted;
 });
