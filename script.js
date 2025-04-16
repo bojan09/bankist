@@ -57,10 +57,12 @@ const inputLoanAmount = document.querySelector(".form__input--loan-amount");
 const inputCloseUsername = document.querySelector(".form__input--user");
 const inputClosePin = document.querySelector(".form__input--pin");
 
-const displayMovements = function (movements, sort = false) {
+const displayMovements = function (acc, sort = false) {
   containerMovements.innerHTML = "";
 
-  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+  const movs = sort
+    ? acc.movements.slice().sort((a, b) => a - b)
+    : acc.movements;
 
   movs.forEach(function (mov, i) {
     const type = mov > 0 ? "deposit" : "withdrawal";
@@ -121,15 +123,28 @@ createUsernames(accounts);
 // Update UI
 const updateUI = (acc) => {
   // Display movements
-  displayMovements(currentAccount.movements);
+  displayMovements(acc);
   // Display balance
-  calcAndDisplayBalance(currentAccount);
+  calcAndDisplayBalance(acc);
   // Display summary
-  calcAndDisplaySummary(currentAccount);
+  calcAndDisplaySummary(acc);
 };
 
 // Event handlers
 let currentAccount;
+
+// Fake always logged in
+currentAccount = account1;
+updateUI(currentAccount);
+containerApp.style.opacity = 100;
+
+const now = new Date();
+const minute = now.getMinutes();
+const hour = now.getHours();
+const day = `${now.getDate()}`.padStart(2, 0);
+const month = `${now.getMonth() + 1}`.padStart(2, 0);
+const year = now.getFullYear();
+labelDate.textContent = `${day}/${month}/${year} at ${hour}:${minute}`;
 
 btnLogin.addEventListener("click", function (e) {
   // Prevent form from submitting
@@ -252,6 +267,6 @@ let sorted = false;
 btnSort.addEventListener("click", (e) => {
   e.preventDefault();
 
-  displayMovements(currentAccount.movements, !sorted);
+  displayMovements(currentAccount, !sorted);
   sorted = !sorted;
 });
