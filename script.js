@@ -41,7 +41,27 @@ const account2 = {
   locale: "en-US",
 };
 
-const accounts = [account1, account2];
+const account3 = {
+  owner: "John Wick",
+  movements: [2000, 1300, -90, -390, -9210, -3000, 2300, -82],
+  interestRate: 1.5,
+  pin: 3333,
+
+  movementsDates: [
+    "2025-11-01T13:15:33.035Z",
+    "2025-11-30T09:48:16.867Z",
+    "2025-12-25T06:04:23.907Z",
+    "2025-01-25T14:18:46.235Z",
+    "2025-02-05T16:33:06.386Z",
+    "2025-04-10T14:43:26.374Z",
+    "2025-06-25T18:49:59.371Z",
+    "2025-07-26T12:01:20.894Z",
+  ],
+  currency: "MKD",
+  locale: "MKD-mk",
+};
+
+const accounts = [account1, account2, account3];
 
 // Elements
 const labelWelcome = document.querySelector(".welcome");
@@ -69,29 +89,54 @@ const inputLoanAmount = document.querySelector(".form__input--loan-amount");
 const inputCloseUsername = document.querySelector(".form__input--user");
 const inputClosePin = document.querySelector(".form__input--pin");
 
-const displayMovements = function (acc, sort = false) {
+// Functions
+
+const formatMovementDate = function (date, locale) {
+  const calcDaysPassed = (date1, date2) =>
+    Math.round(Math.abs(date2 - date1) / (1000 * 60 * 60 * 24));
+
+  const daysPassed = calcDaysPassed(new Date(), date);
+
+  if (daysPassed === 0) return "Today";
+  if (daysPassed === 1) return "Yesterday";
+  if (daysPassed <= 7) return `${daysPassed} days ago`;
+
+  return new Intl.DateTimeFormat(locale).format(date);
+};
+
+const formatCur = (value, locale, currency) => {
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: currency,
+  }).format(value);
+};
+
+const displayMovements = function (acc, sort) {
   containerMovements.innerHTML = "";
 
-  const movs = sort
-    ? acc.movements.slice().sort((a, b) => a - b)
-    : acc.movements;
+  const combinedMovsDates = acc.movements.map((mov, i) => ({
+    movement: mov,
+    movementDate: acc.movementsDates.at(i),
+  }));
 
-  movs.forEach(function (mov, i) {
-    const type = mov > 0 ? "deposit" : "withdrawal";
+  if (sort) combinedMovsDates.sort((a, b) => a.movement - b.movement);
 
-    const date = new Date(acc.movementsDates[i]);
+  combinedMovsDates.forEach(function (obj, i) {
+    const { movement, movementDate } = obj;
+    const type = movement > 0 ? "deposit" : "withdrawal";
 
-    const day = `${date.getDate()}`.padStart(2, 0);
-    const month = `${date.getMonth() + 1}`.padStart(2, 0);
-    const year = date.getFullYear();
-    const displayDate = `${day}/${month}/${year}`;
+    const date = new Date(movementDate);
+    const displayDate = formatMovementDate(date);
+
+    const formattedMov = formatCur(movement, acc.locale, acc.currency);
 
     const html = `
-     <div class="movements__row">
-        <div class="movements__type movements__type--${type}"> 
-        ${i + 1} ${type}</div>
-        <div class=movements_date>${displayDate}</div>
-        <div class="movements__value">${mov.toFixed(2)}</div>
+      <div class="movements__row">
+        <div class="movements__type movements__type--${type}">${
+      i + 1
+    } ${type}</div>
+        <div class="movements__date">${displayDate}</div>
+        <div class="movements__value">${formattedMov}</div>
       </div>
     `;
 
@@ -101,19 +146,19 @@ const displayMovements = function (acc, sort = false) {
 
 const calcAndDisplayBalance = (acc) => {
   acc.balance = acc.movements.reduce((acc, move) => acc + move, 0);
-  labelBalance.textContent = `${acc.balance.toFixed(2)} €`;
+  labelBalance.textContent = formatCur(acc.balance, acc.locale, acc.currency);
 };
 
 const calcAndDisplaySummary = (acc) => {
   const incomes = acc.movements
     .filter((mov) => mov > 0)
     .reduce((acc, mov) => acc + mov, 0);
-  labelSumIn.textContent = `${incomes.toFixed(2)} €`;
+  labelSumIn.textContent = formatCur(incomes, acc.locale, acc.currency);
 
   const out = acc.movements
     .filter((mov) => mov < 0)
     .reduce((acc, mov) => acc + mov, 0);
-  labelSumOut.textContent = `${Math.abs(out).toFixed(2)} €`;
+  labelSumOut.textContent = formatCur(Math.abs(out), acc.locale, acc.currency);
 
   const interest = acc.movements
     .filter((mov) => mov > 0)
@@ -123,7 +168,7 @@ const calcAndDisplaySummary = (acc) => {
       return int >= 1;
     })
     .reduce((acc, int) => acc + int, 0);
-  labelSumInterest.textContent = `${interest.toFixed(2)} €`;
+  labelSumInterest.textContent = formatCur(interest, acc.locale, acc.currency);
 };
 
 // return first initials from name
@@ -158,14 +203,6 @@ currentAccount = account1;
 updateUI(currentAccount);
 containerApp.style.opacity = 100;
 
-const now = new Date();
-const minute = now.getMinutes();
-const hour = now.getHours();
-const day = `${now.getDate()}`.padStart(2, 0);
-const month = `${now.getMonth() + 1}`.padStart(2, 0);
-const year = now.getFullYear();
-labelDate.textContent = `${day}/${month}/${year} at ${hour}:${minute}`;
-
 btnLogin.addEventListener("click", function (e) {
   // Prevent form from submitting
   e.preventDefault();
@@ -183,6 +220,15 @@ btnLogin.addEventListener("click", function (e) {
     }`;
 
     containerApp.style.opacity = 100;
+
+    // Create current date and time
+    const now = new Date();
+    const minute = now.getMinutes();
+    const hour = now.getHours();
+    const day = `${now.getDate()}`.padStart(2, 0);
+    const month = `${now.getMonth() + 1}`.padStart(2, 0);
+    const year = now.getFullYear();
+    labelDate.textContent = `${day}/${month}/${year} at ${hour}:${minute}`;
 
     // Clear input fields
     inputLoginUsername.value = inputLoginPin.value = "";
@@ -231,6 +277,10 @@ btnTransfer.addEventListener("click", (e) => {
     currentAccount.movements.push(-amount);
     reciverAccount.movements.push(amount);
 
+    // Add transfer date
+    currentAccount.movementsDates.push(new Date());
+    reciverAccount.movementsDates.push(new Date());
+
     // Update UI
     updateUI(currentAccount);
   }
@@ -249,6 +299,9 @@ btnLoan.addEventListener("click", (e) => {
   ) {
     // Add movement
     currentAccount.movements.push(amount);
+
+    // Add loan date
+    currentAccount.movementsDates.push(new Date());
 
     // Update UI
     updateUI(currentAccount);
