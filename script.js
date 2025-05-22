@@ -195,6 +195,22 @@ const updateUI = (acc) => {
   calcAndDisplaySummary(acc);
 };
 
+const startLogOutTimer = function () {
+  // Set time to 5mins
+  let time = 100;
+
+  // Call the timer every second
+  setInterval(function () {
+    labelTimer.textContent = time;
+
+    // Call the timer every second
+    time--;
+
+    // In each calcAndDisplayBalance, print the remaining time to the UI
+    // When 0 seconds reached stop timer and log out user
+  }, 1000);
+};
+
 // Event handlers
 let currentAccount;
 
@@ -235,6 +251,8 @@ btnLogin.addEventListener("click", function (e) {
     // remove focus on the pin  field
 
     inputLoginPin.blur();
+
+    startLogOutTimer();
 
     // Update UI
     updateUI(currentAccount);
