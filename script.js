@@ -43,7 +43,7 @@ const account2 = {
 
 const account3 = {
   owner: "John Wick",
-  movements: [2000, 1300, -90, -390, -9210, -3000, 2300, -82],
+  movements: [2000, 1300, -90, -390, -9210, -3000, 2300, 30000],
   interestRate: 1.5,
   pin: 3333,
 
@@ -196,28 +196,41 @@ const updateUI = (acc) => {
 };
 
 const startLogOutTimer = function () {
-  // Set time to 5mins
-  let time = 100;
+  const tick = function () {
+    const min = String(Math.trunc(time / 60)).padStart(2, 0);
+    const sec = String(time % 60).padStart(2, 0);
+
+    // In each call, print the remaining time to UI
+    labelTimer.textContent = `${min}:${sec}`;
+
+    // When 0 seconds, stop timer and log out user
+    if (time === 0) {
+      clearInterval(timer);
+      labelWelcome.textContent = "Log in to get started";
+      containerApp.style.opacity = 0;
+
+      window.scrollTo("smooth", {
+        top: 0,
+        left: 0,
+      });
+    }
+
+    // Decrease 1s
+    time--;
+  };
+
+  // Set time to 5 minutes
+  let time = 300;
 
   // Call the timer every second
-  setInterval(function () {
-    labelTimer.textContent = time;
+  tick();
+  const timer = setInterval(tick, 1000);
 
-    // Call the timer every second
-    time--;
-
-    // In each calcAndDisplayBalance, print the remaining time to the UI
-    // When 0 seconds reached stop timer and log out user
-  }, 1000);
+  return timer;
 };
 
 // Event handlers
-let currentAccount;
-
-// Fake always logged in
-currentAccount = account1;
-updateUI(currentAccount);
-containerApp.style.opacity = 100;
+let currentAccount, timer;
 
 btnLogin.addEventListener("click", function (e) {
   // Prevent form from submitting
@@ -231,7 +244,7 @@ btnLogin.addEventListener("click", function (e) {
 
   if (currentAccount?.pin === Number(inputLoginPin.value)) {
     // Display UI  and welcome message
-    labelWelcome.textContent = `Welcome back ${
+    labelWelcome.textContent = `Welcome back, ${
       currentAccount.owner.split(" ")[0]
     }`;
 
@@ -252,7 +265,8 @@ btnLogin.addEventListener("click", function (e) {
 
     inputLoginPin.blur();
 
-    startLogOutTimer();
+    if (timer) clearInterval(timer);
+    timer = startLogOutTimer();
 
     // Update UI
     updateUI(currentAccount);
@@ -301,6 +315,10 @@ btnTransfer.addEventListener("click", (e) => {
 
     // Update UI
     updateUI(currentAccount);
+
+    // Reset timer
+    clearInterval(timer);
+    timer = startLogOutTimer();
   }
 });
 
@@ -324,6 +342,10 @@ btnLoan.addEventListener("click", (e) => {
 
       // Update UI
       updateUI(currentAccount);
+
+      // Reset timer
+      clearInterval(timer);
+      timer = startLogOutTimer();
     }, 2500);
   }
 
